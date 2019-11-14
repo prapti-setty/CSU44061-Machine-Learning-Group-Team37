@@ -53,7 +53,7 @@ def deal_with_nan_test(test_data, training_data):
     test_data['Body Height [cm]'] = test_data['Body Height [cm]'].fillna(int(avg_body_height(training_data)))
     test_data['Profession'] = test_data['Profession'].fillna('Unknown')
     test_data['Crime Level in the City of Employement'] = test_data['Crime Level in the City of Employement'].fillna(int(avg_crime(training_data)))
-    test_data['Work Experience in Current Job [years]'] = test_data['Work Experience in Current Job [years]'].fillna(5)
+    #test_data['Work Experience in Current Job [years]'] = test_data['Work Experience in Current Job [years]'].fillna(5)
     test_data['Satisfation with employer'] = test_data['Satisfation with employer'].fillna("Average")
     #test_data['Yearly Income in addition to Salary (e.g. Rental Income)'] = test_data['Yearly Income in addition to Salary (e.g. Rental Income)'].fillna(0)
     return test_data
@@ -71,8 +71,8 @@ def main():
     training_data = pd.concat((training_data1,training_data2), axis=1)
     test_data = pd.read_csv("tcd-ml-1920-group-income-test.csv")
     
-    training_data = training_data.drop(['Hair Color', 'Wears Glasses','Yearly Income in addition to Salary (e.g. Rental Income)'], axis=1)
-    test_data = test_data.drop(['Hair Color', 'Wears Glasses','Yearly Income in addition to Salary (e.g. Rental Income)'], axis=1)
+    training_data = training_data.drop(['Hair Color', 'Wears Glasses','Work Experience in Current Job [years]','Yearly Income in addition to Salary (e.g. Rental Income)'], axis=1)
+    test_data = test_data.drop(['Hair Color', 'Wears Glasses','Work Experience in Current Job [years]','Yearly Income in addition to Salary (e.g. Rental Income)'], axis=1)
 
     # Clean Data
     # Remove any Nan's from training data
@@ -115,8 +115,8 @@ def main():
 
     #avg_income = (train['Income in EUR'].mean())
 
-    train = train.drop(['Average', 'Brown', 'Congo', 'Large Apartment', 'other', 'real estate manager','Total Yearly Income [EUR]','Instance'], axis=1)
-    test = test.drop(['Average', 'Brown', 'Congo', 'Large Apartment', 'other', 'real estate manager','Total Yearly Income [EUR]','Instance'], axis=1)
+    train = train.drop(['Total Yearly Income [EUR]','Instance','#N/A', '0 EUR', '1', '116', '15', '156', '16650.13', '2000', '33', '44313', '743135', 'Average', 'Brown', 'Congo', 'Large Apartment', 'other', 'real estate manager'], axis=1)
+    test = test.drop(['Total Yearly Income [EUR]','Instance','#N/A', '0 EUR', '1', '116', '15', '156', '16650.13', '2000', '33', '44313', '743135', 'Average', 'Brown', 'Congo', 'Large Apartment', 'other', 'real estate manager'], axis=1)
 
     X_train = train
     X_test = test
