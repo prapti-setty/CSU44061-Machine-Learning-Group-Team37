@@ -55,13 +55,13 @@ def deal_with_nan_test(test_data, training_data):
     test_data['Crime Level in the City of Employement'] = test_data['Crime Level in the City of Employement'].fillna(int(avg_crime(training_data)))
     test_data['Work Experience in Current Job [years]'] = test_data['Work Experience in Current Job [years]'].fillna(5)
     test_data['Satisfation with employer'] = test_data['Satisfation with employer'].fillna("Average")
-    test_data['Yearly Income in addition to Salary (e.g. Rental Income)'] = test_data['Yearly Income in addition to Salary (e.g. Rental Income)'].fillna(0)
+    #test_data['Yearly Income in addition to Salary (e.g. Rental Income)'] = test_data['Yearly Income in addition to Salary (e.g. Rental Income)'].fillna(0)
     return test_data
 
 def transform_features(data):
-    #data['University Degree'] = data['University Degree'].map({'Bachelor':1, 'PhD':3, 'other':0.5, '0':0, 'Master':2, 'No':0})
-    encode = pd.get_dummies(data, columns=[ "Gender","Country","Profession","University Degree"],
-    prefix=["enc_gen","enc_country","enc_pro","enc_uni"], drop_first=True)
+    data['University Degree'] = data['University Degree'].map({'Bachelor':1, 'PhD':3, 'other':0.5, '0':0, 'Master':2, 'No':0})
+    encode = pd.get_dummies(data, columns=[ "Gender","Country","Profession","Housing Situation","Satisfation with employer"],
+    prefix=["enc_gen","enc_country","enc_pro","enc_housing","enc_sat"], drop_first=True)
     return encode
     
 def main():
@@ -71,8 +71,8 @@ def main():
     training_data = pd.concat((training_data1,training_data2), axis=1)
     test_data = pd.read_csv("tcd-ml-1920-group-income-test.csv")
     
-    training_data = training_data.drop(['Hair Color', "Wears Glasses","Housing Situation"], axis=1)
-    test_data = test_data.drop(['Hair Color', "Wears Glasses","Housing Situation"], axis=1)
+    training_data = training_data.drop(['Hair Color', 'Wears Glasses','Yearly Income in addition to Salary (e.g. Rental Income)'], axis=1)
+    test_data = test_data.drop(['Hair Color', 'Wears Glasses','Yearly Income in addition to Salary (e.g. Rental Income)'], axis=1)
 
     # Clean Data
     # Remove any Nan's from training data
@@ -85,11 +85,17 @@ def main():
     
     # Join training and test data
     appended = non_nan_data.append(non_nan_test_data)
+
+    # Label encode the entire dataset of training + test
+    # for column in appended.columns:
+    #     if appended[column].dtype == type(object):
+    #         le = preprocessing.LabelEncoder()
+    #         appended[column] = le.fit_transform(appended[column])
     
-    # One hot encode data columns
+    # One hot encode the entire dataset of training + test
     transformed_data = transform_features(appended)
     
-    # Split data 
+    # Split data back into training and test seperately
     df_1 = pd.DataFrame()
     df_2 = pd.DataFrame()
     if appended.shape[0] > split_data_at: 
@@ -109,14 +115,19 @@ def main():
 
     #avg_income = (train['Income in EUR'].mean())
 
-    train = train.drop(['Total Yearly Income [EUR]','Instance'], axis=1)
-    test = test.drop(['Total Yearly Income [EUR]','Instance'], axis=1)
+    train = train.drop(['Average', 'Brown', 'Congo', 'Large Apartment', 'other', 'real estate manager','Total Yearly Income [EUR]','Instance'], axis=1)
+    test = test.drop(['Average', 'Brown', 'Congo', 'Large Apartment', 'other', 'real estate manager','Total Yearly Income [EUR]','Instance'], axis=1)
 
     X_train = train
     X_test = test
 
     A_train, A_test, b_train, b_test = train_test_split(X_train, y_train, test_size=0.1, random_state = 10)
     
+    a = X_train.columns[X_train.isna().any()].tolist()
+    print(a)
+    a = X_test.columns[X_test.isna().any()].tolist()
+    print(a)
+
     # Model training
     model2.fit(X_train, y_train['Income'].values.ravel())
     model.fit(X_train, y_train['Income'].values.ravel())
