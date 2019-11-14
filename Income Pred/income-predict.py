@@ -150,7 +150,7 @@ def main():
     income = df.mean(axis=1)
     
     # Create submission dataframe
-    df_1 = pd.DataFrame({'Instance':instance.flatten(),'Income': income})
+    df_1 = pd.DataFrame({'Instance':instance.flatten(),'Total Yearly Income [EUR]': income})
 
     # Save dataframe to submission file as csv
     df_1.to_csv(r'tcd ml 2019-20 income prediction submission file.csv')
