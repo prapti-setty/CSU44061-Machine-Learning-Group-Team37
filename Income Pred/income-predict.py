@@ -110,6 +110,7 @@ def main():
     test = df_2
     
     y_train = pd.DataFrame({'Income':train['Total Yearly Income [EUR]']})
+    y_train['Income'] = np.log(y_train['Income'])
     
     instance = test['Instance'].values.reshape(-1,1)
 
@@ -147,7 +148,8 @@ def main():
 
     df = pd.DataFrame({'Income1':y_pred_lr , 'Income2':y_pred_rr})
 
-    income = df.mean(axis=1)
+    income = df.mean(axis=1) 
+    income = np.exp(income)
     
     # Create submission dataframe
     df_1 = pd.DataFrame({'Instance':instance.flatten(),'Total Yearly Income [EUR]': income})
