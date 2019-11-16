@@ -132,7 +132,7 @@ def main():
     test = df_2
     
     y_train = pd.DataFrame({'Income':train['Total Yearly Income [EUR]']})
-    y_train['Income'] = np.log(y_train['Income'])
+    #y_train['Income'] = np.log(y_train['Income'])
     
     instance = test['Instance'].values.reshape(-1,1)
 
@@ -162,11 +162,11 @@ def main():
     # Model prediction
     y_pred_lr = model.predict(X_test)
     A_pred_lr = model.predict(A_test)
-    A_pred_lr = np.exp(A_pred_lr)
+    #A_pred_lr = np.exp(A_pred_lr)
 
     y_pred_rr = model2.predict(X_test)
     A_pred_rr = model2.predict(A_test)
-    A_pred_rr = np.exp(A_pred_rr)
+    #A_pred_rr = np.exp(A_pred_rr)
 
     mae = mean_absolute_error(b_test, A_pred_lr)
     print(mae)
