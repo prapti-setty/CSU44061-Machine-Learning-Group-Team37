@@ -5,7 +5,7 @@ import pandas as pd
 from sklearn import preprocessing
 from sklearn import linear_model
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_squared_error
+from sklearn.metrics import mean_absolute_error
 from sklearn.ensemble import RandomForestRegressor
 # Load numpy libraries with alias np
 import numpy as np
@@ -109,10 +109,10 @@ def main():
     appended = non_nan_data.append(non_nan_test_data)
 
     # Label encode the entire dataset of training + test
-    # for column in appended.columns:
-    #     if appended[column].dtype == type(object):
-    #         le = preprocessing.LabelEncoder()
-    #         appended[column] = le.fit_transform(appended[column])
+    for column in appended.columns:
+        if appended[column].dtype == type(object):
+            le = preprocessing.LabelEncoder()
+            appended[column] = le.fit_transform(appended[column])
     
     # One hot encode the entire dataset of training + test
     transformed_data = transform_features(appended)
@@ -142,6 +142,9 @@ def main():
     train = train.drop(['Total Yearly Income [EUR]','Instance','#N/A', '0 EUR', '1', '116', '15', '156', '16650.13', '2000', '33', '44313', '743135', 'Average', 'Brown', 'Congo', 'Large Apartment', 'other', 'real estate manager'], axis=1)
     test = test.drop(['Total Yearly Income [EUR]','Instance','#N/A', '0 EUR', '1', '116', '15', '156', '16650.13', '2000', '33', '44313', '743135', 'Average', 'Brown', 'Congo', 'Large Apartment', 'other', 'real estate manager'], axis=1)
 
+    train['University Degree'] = train['University Degree'].fillna(0)
+    test['University Degree'] = test['University Degree'].fillna(0)
+
     X_train = train
     X_test = test
 
@@ -165,11 +168,11 @@ def main():
     A_pred_rr = model2.predict(A_test)
     A_pred_rr = np.exp(A_pred_rr)
 
-    rms = sqrt(mean_squared_error(b_test, A_pred_lr))
-    print(rms)
+    mae = mean_absolute_error(b_test, A_pred_lr)
+    print(mae)
 
-    rms = sqrt(mean_squared_error(b_test, A_pred_rr))
-    print(rms)
+    mae = mean_absolute_error(b_test, A_pred_rr)
+    print(mae)
 
     df = pd.DataFrame({'Income1':y_pred_lr , 'Income2':y_pred_rr})
 
