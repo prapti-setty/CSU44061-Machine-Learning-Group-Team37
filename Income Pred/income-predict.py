@@ -17,6 +17,13 @@ def deal_with_nan_training(data):
     data['University Degree'] = data['University Degree'].fillna('No')
     # Drop any rows which have any nan's
     data = data.dropna(axis=0)
+    #data = outlier_removal(data)
+    return data
+
+def outlier_removal(data):
+    z = np.abs(stats.zscore(data['Total Yearly Income [EUR]']))
+    threshold = 3
+    data = data[(z < threshold).all(axis=1)]
     return data
 
 def avg_age(data):
@@ -53,12 +60,20 @@ def deal_with_nan_test(test_data, training_data):
     test_data['Body Height [cm]'] = test_data['Body Height [cm]'].fillna(int(avg_body_height(training_data)))
     test_data['Profession'] = test_data['Profession'].fillna('Unknown')
     test_data['Crime Level in the City of Employement'] = test_data['Crime Level in the City of Employement'].fillna(int(avg_crime(training_data)))
-    #test_data['Work Experience in Current Job [years]'] = test_data['Work Experience in Current Job [years]'].fillna(5)
+    #test_data['Work Experience in Current Job [years]'] = test_data['Work Experience in Current Job [years]'].fillna(int(avg_work_exp(training_data)))
     test_data['Satisfation with employer'] = test_data['Satisfation with employer'].fillna("Average")
     #test_data['Yearly Income in addition to Salary (e.g. Rental Income)'] = test_data['Yearly Income in addition to Salary (e.g. Rental Income)'].fillna(0)
     return test_data
 
 def transform_features(data):
+    data = one_hot_encode(data)
+    return data
+
+def fix_incosistencies(data):
+    data['Gender'] = data['Gender'].map({'f':'female', 'm':'male','0':'unknown'})
+    return data
+
+def one_hot_encode(data):
     data['University Degree'] = data['University Degree'].map({'Bachelor':1, 'PhD':3, 'other':0.5, '0':0, 'Master':2, 'No':0})
     encode = pd.get_dummies(data, columns=[ "Gender","Country","Profession","Housing Situation","Satisfation with employer"],
     prefix=["enc_gen","enc_country","enc_pro","enc_housing","enc_sat"], drop_first=True)
@@ -70,9 +85,16 @@ def main():
     training_data2 = pd.read_csv("tcd-ml-1920-group-income-train (2).csv")
     training_data = pd.concat((training_data1,training_data2), axis=1)
     test_data = pd.read_csv("tcd-ml-1920-group-income-test.csv")
+
+    #NUM!
+    training_data = training_data.replace("#NUM!", 0)
+    test_data = test_data.replace("#NUM!", 0)
+
+    # Additional Income Column
+    add_inc = test_data['Yearly Income in addition to Salary (e.g. Rental Income)']
     
-    training_data = training_data.drop(['Hair Color', 'Wears Glasses','Work Experience in Current Job [years]','Yearly Income in addition to Salary (e.g. Rental Income)'], axis=1)
-    test_data = test_data.drop(['Hair Color', 'Wears Glasses','Work Experience in Current Job [years]','Yearly Income in addition to Salary (e.g. Rental Income)'], axis=1)
+    training_data = training_data.drop(['Work Experience in Current Job [years]','Hair Color', 'Wears Glasses','Yearly Income in addition to Salary (e.g. Rental Income)'], axis=1)
+    test_data = test_data.drop(['Work Experience in Current Job [years]','Hair Color', 'Wears Glasses','Yearly Income in addition to Salary (e.g. Rental Income)'], axis=1)
 
     # Clean Data
     # Remove any Nan's from training data
@@ -115,6 +137,7 @@ def main():
     instance = test['Instance'].values.reshape(-1,1)
 
     #avg_income = (train['Income in EUR'].mean())
+    # ,'#N/A', '0 EUR', '1', '116', '15', '156', '16650.13', '2000', '33', '44313', '743135', 'Average', 'Brown', 'Congo', 'Large Apartment', 'other', 'real estate manager'
 
     train = train.drop(['Total Yearly Income [EUR]','Instance','#N/A', '0 EUR', '1', '116', '15', '156', '16650.13', '2000', '33', '44313', '743135', 'Average', 'Brown', 'Congo', 'Large Apartment', 'other', 'real estate manager'], axis=1)
     test = test.drop(['Total Yearly Income [EUR]','Instance','#N/A', '0 EUR', '1', '116', '15', '156', '16650.13', '2000', '33', '44313', '743135', 'Average', 'Brown', 'Congo', 'Large Apartment', 'other', 'real estate manager'], axis=1)
@@ -136,9 +159,11 @@ def main():
     # Model prediction
     y_pred_lr = model.predict(X_test)
     A_pred_lr = model.predict(A_test)
+    A_pred_lr = np.exp(A_pred_lr)
 
     y_pred_rr = model2.predict(X_test)
     A_pred_rr = model2.predict(A_test)
+    A_pred_rr = np.exp(A_pred_rr)
 
     rms = sqrt(mean_squared_error(b_test, A_pred_lr))
     print(rms)
@@ -150,6 +175,10 @@ def main():
 
     income = df.mean(axis=1) 
     income = np.exp(income)
+
+    add_inc = add_inc.str.extract('(\d+)')
+    income = income.append(add_inc)
+    income = df.sum(axis=1)
     
     # Create submission dataframe
     df_1 = pd.DataFrame({'Instance':instance.flatten(),'Total Yearly Income [EUR]': income})
