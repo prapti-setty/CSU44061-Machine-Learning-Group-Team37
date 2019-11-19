@@ -15,9 +15,13 @@ import math
 from math import sqrt
 
 def deal_with_nan(data):
+    imp_mean = SimpleImputer(missing_values=np.nan, strategy='most_frequent')
+    #data = imp_mean.fit(data)
     # Mean any rows which have any nan's
+    print(data.dtypes)
     for col in data.columns:
         data[col] = data[col].fillna(0)
+        #data[col].mean()
     print(data.dtypes)
     return data
 
@@ -34,19 +38,14 @@ def main():
     # Join training and test data
     appended = training_data.append(test_data)
 
-    #NUM!
-    appended = appended.replace("#NUM!", 0)
-
     #Na
     appended = appended.replace("\N", np.nan)
     #Na
     appended = appended.replace("nA", np.nan)
+    #'query_word_count','query_char_count','year_published','number_of_authors','abstract_word_count','abstract_char_count',
 
-    new_num_appended = appended[['query_word_count','query_char_count','year_published','number_of_authors','abstract_word_count','abstract_char_count','organization_id','hour_request_received','rec_processing_time','number_of_recs_in_set','clicks','ctr','set_clicked']]
+    new_num_appended = appended[['organization_id','hour_request_received','rec_processing_time','number_of_recs_in_set','clicks','ctr','set_clicked']]
     new_other_appended = appended[['query_detected_language','query_identifier','abstract_detected_language','application_type','item_type','app_lang','algorithm_class','cbf_parser','search_title','search_keywords']]
-
-    a = new_num_appended.columns[new_num_appended.isna().any()].tolist()
-    print(a)
 
     # Clean Data
 
@@ -55,8 +54,6 @@ def main():
         if new_other_appended[column].dtype == type(object):
             le = preprocessing.LabelEncoder()
             new_other_appended[column] = le.fit_transform(new_other_appended[column])
-    
-    print(new_other_appended.shape)
 
     new_num_appended = deal_with_nan(new_num_appended)
 
@@ -80,14 +77,16 @@ def main():
     a = test.columns[test.isna().any()].tolist()
     print(a)
 
-    model = linear_model.LinearRegression()
+    model = RandomForestRegressor(n_estimators=10)
 
     model.fit(train, y_train)
 
     A = model.predict(test)
 
+    df = pd.DataFrame({'set_clicked': A.flatten()})
+    
     # Create submission dataframe
-    df_1 = pd.DataFrame({'recommendation_set_id':y_ans['recommendation_set_id'],'set_clicked': A.flatten()})
+    df_1 = pd.DataFrame({'recommendation_set_id':y_ans['recommendation_set_id'],'set_clicked': df['set_clicked']})
 
     # Save dataframe to submission file as csv
     df_1.to_csv(r'tcd ml 2019-20 rec prediction submission file.csv')
