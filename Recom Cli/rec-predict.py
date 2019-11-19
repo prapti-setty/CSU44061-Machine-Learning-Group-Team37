@@ -15,14 +15,15 @@ import math
 from math import sqrt
 
 def deal_with_nan(data):
-    imp_mean = SimpleImputer(missing_values=np.nan, strategy='most_frequent')
+    imp_mean = preprocessing.Imputer(missing_values=np.nan, strategy='most_frequent', axis=1)
     #data = imp_mean.fit(data)
     # Mean any rows which have any nan's
-    print(data.dtypes)
-    for col in data.columns:
-        data[col] = data[col].fillna(0)
+    data = pd.DataFrame(imp_mean.fit_transform(data))
+
+    #for col in data.columns:
+    #    data[col] = data[col].fillna(data[col].mean())
         #data[col].mean()
-    print(data.dtypes)
+    #print(data.dtypes)
     return data
 
 def main():
@@ -44,20 +45,17 @@ def main():
     appended = appended.replace("nA", np.nan)
     #'query_word_count','query_char_count','year_published','number_of_authors','abstract_word_count','abstract_char_count',
 
-    new_num_appended = appended[['organization_id','hour_request_received','rec_processing_time','number_of_recs_in_set','clicks','ctr','set_clicked']]
-    new_other_appended = appended[['query_detected_language','query_identifier','abstract_detected_language','application_type','item_type','app_lang','algorithm_class','cbf_parser','search_title','search_keywords']]
-
     # Clean Data
+    appended = appended[['organization_id','hour_request_received','rec_processing_time','number_of_recs_in_set','clicks','ctr','set_clicked','query_detected_language','query_identifier','abstract_detected_language','application_type','item_type','app_lang','algorithm_class','cbf_parser','search_title','search_keywords']]
 
     # Label encode the dataset columns that are not ints of training + test
-    for column in new_other_appended.columns:
-        if new_other_appended[column].dtype == type(object):
+    for column in appended.columns:
+        if appended[column].dtype == type(object):
             le = preprocessing.LabelEncoder()
-            new_other_appended[column] = le.fit_transform(new_other_appended[column])
+            appended[column] = le.fit_transform(appended[column])
 
-    new_num_appended = deal_with_nan(new_num_appended)
-
-    appended = pd.concat((new_num_appended,new_other_appended), axis =1)
+    
+    appended = deal_with_nan(appended)
 
     # Split data back into training and test seperately
     df_1 = pd.DataFrame()
@@ -69,7 +67,7 @@ def main():
     train = df_1
     test = df_2
 
-    y_train = pd.DataFrame({'set_clicked':train['set_clicked']})
+    y_train = pd.DataFrame({'set_clicked':training_data['set_clicked']})
     y_ans = pd.DataFrame({'recommendation_set_id':test_data['recommendation_set_id']})
 
     a = train.columns[train.isna().any()].tolist()
@@ -77,13 +75,17 @@ def main():
     a = test.columns[test.isna().any()].tolist()
     print(a)
 
-    model = RandomForestRegressor(n_estimators=10)
+    model = linear_model.LinearRegression(normalize=True)
+    #RandomForestRegressor(n_estimators=10)
 
     model.fit(train, y_train)
 
     A = model.predict(test)
 
-    df = pd.DataFrame({'set_clicked': A.flatten()})
+    df = pd.DataFrame({'set_clicked_lr': A.flatten()})
+
+    df.loc[df.set_clicked_lr <= 1, 'set_clicked'] = '0'
+    df.loc[df.set_clicked_lr > 1, 'set_clicked'] = '1'
     
     # Create submission dataframe
     df_1 = pd.DataFrame({'recommendation_set_id':y_ans['recommendation_set_id'],'set_clicked': df['set_clicked']})
