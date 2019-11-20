@@ -7,6 +7,7 @@ from sklearn import linear_model
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_absolute_error
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.neural_network import MLPClassifier
 from sklearn.impute import SimpleImputer
 # Load numpy libraries with alias np
 import numpy as np
@@ -43,10 +44,14 @@ def main():
     appended = appended.replace("\N", np.nan)
     #Na
     appended = appended.replace("nA", np.nan)
+
+    # drop set_clicked 
+    appended = appended.drop(['set_clicked', 'recommendation_set_id'], axis=1)
+
     #'query_word_count','query_char_count','year_published','number_of_authors','abstract_word_count','abstract_char_count',
 
     # Clean Data
-    appended = appended[['organization_id','hour_request_received','rec_processing_time','number_of_recs_in_set','clicks','ctr','set_clicked','query_detected_language','query_identifier','abstract_detected_language','application_type','item_type','app_lang','algorithm_class','cbf_parser','search_title','search_keywords']]
+    #appended = appended[['organization_id','hour_request_received','rec_processing_time','number_of_recs_in_set','clicks','ctr','set_clicked','query_detected_language','query_identifier','abstract_detected_language','application_type','item_type','app_lang','algorithm_class','cbf_parser','search_title','search_keywords']]
 
     # Label encode the dataset columns that are not ints of training + test
     for column in appended.columns:
@@ -75,17 +80,37 @@ def main():
     a = test.columns[test.isna().any()].tolist()
     print(a)
 
-    model = linear_model.LinearRegression(normalize=True)
+    toDrop = [] 
+
+    for i in train:
+        corr = train[i].corr(y_train['set_clicked'])
+        if(corr <= 0.1):
+            toDrop.append(i)
+        if(corr > 0.1):
+            print(train.columns.values[i],'corr= ', corr)
+    
+    print(toDrop)
+    train = train.drop(toDrop,axis=1)
+    test = test.drop(toDrop,axis=1)
+    # iterating the columns 
+    # for col in train.columns: 
+    #     print(col) 
+    # iterating the columns 
+    # for col in test.columns: 
+    #     print(col) 
+
+    model = RandomForestRegressor(n_estimators=10)
+    model2 = MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes=(5, 2), random_state=1)
     #RandomForestRegressor(n_estimators=10)
 
     model.fit(train, y_train)
 
     A = model.predict(test)
 
-    df = pd.DataFrame({'set_clicked_lr': A.flatten()})
+    df = pd.DataFrame({'set_clicked': A.flatten()})
 
-    df.loc[df.set_clicked_lr <= 1, 'set_clicked'] = '0'
-    df.loc[df.set_clicked_lr > 1, 'set_clicked'] = '1'
+    #df.loc[df.set_clicked_lr <= 10, 'set_clicked'] = '0'
+    #df.loc[df.set_clicked_lr > 10, 'set_clicked'] = '1'
     
     # Create submission dataframe
     df_1 = pd.DataFrame({'recommendation_set_id':y_ans['recommendation_set_id'],'set_clicked': df['set_clicked']})
