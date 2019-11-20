@@ -6,7 +6,7 @@ from sklearn import preprocessing
 from sklearn import linear_model
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_absolute_error
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.impute import SimpleImputer
 # Load numpy libraries with alias np
@@ -29,8 +29,8 @@ def deal_with_nan(data):
 
 def main():
     # Read data from files
-    training_data1 = pd.read_csv("tcdml1920-rec-click-pred--training(1).csv")
-    training_data2 = pd.read_csv("tcdml1920-rec-click-pred--training(1).csv")
+    training_data1 = pd.read_csv("tcdml1920-rec-click-pred--training(2).csv")
+    training_data2 = pd.read_csv("tcdml1920-rec-click-pred--training(2).csv")
     training_data = training_data1.append(training_data2)
     test_data = pd.read_csv("tcdml1920-rec-click-pred--test.csv")
 
@@ -59,7 +59,6 @@ def main():
             le = preprocessing.LabelEncoder()
             appended[column] = le.fit_transform(appended[column])
 
-    
     appended = deal_with_nan(appended)
 
     # Split data back into training and test seperately
@@ -78,15 +77,16 @@ def main():
     a = train.columns[train.isna().any()].tolist()
     print(a)
     a = test.columns[test.isna().any()].tolist()
-    print(a)
+    print(a) 
 
     toDrop = [] 
 
     for i in train:
         corr = train[i].corr(y_train['set_clicked'])
-        if(corr <= 0.1):
+        if(corr <= 0.04):
             toDrop.append(i)
-        if(corr > 0.1):
+            #print(train.columns.values[i],'corr= ', corr)
+        if(corr > 0.04):
             print(train.columns.values[i],'corr= ', corr)
     
     print(toDrop)
@@ -99,7 +99,7 @@ def main():
     # for col in test.columns: 
     #     print(col) 
 
-    model = RandomForestRegressor(n_estimators=10)
+    model = RandomForestClassifier(n_estimators=10)
     model2 = MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes=(5, 2), random_state=1)
     #RandomForestRegressor(n_estimators=10)
 
