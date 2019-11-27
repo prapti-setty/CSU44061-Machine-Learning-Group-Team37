@@ -9,6 +9,7 @@ Group Members: Prapti Setty, Yash Pandey, Taranvir Singh
 1. [Other things tried](#Other)
 
 ## About
+Algorithm Used: LGBoost
 
 ## Method
 
