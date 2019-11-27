@@ -14,10 +14,13 @@ Predict the income of a person based on a number of features - follows on from i
 
 ## Method
 Algorithm Used: LGBoost
+
 Data Exploration:
 
 Preprocessing:
+
 Nans -
+
 Encoding -
 
 Fitting model:
